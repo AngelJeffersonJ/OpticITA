@@ -1,125 +1,271 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Tienda de Lentes',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: CatalogoLentes(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class CatalogoLentes extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _CatalogoLentesState createState() => _CatalogoLentesState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _CatalogoLentesState extends State<CatalogoLentes> {
+  late int _selectedIndex;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = 0;
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('Catálogo de Lentes'),
+        actions: [
+          PopupMenuButton<int>(
+            onSelected: (value) {
+              // Acción al seleccionar una opción del menú
+              setState(() {
+                _selectedIndex = value;
+              });
+            },
+            itemBuilder: (BuildContext context) {
+              return <PopupMenuEntry<int>>[
+                PopupMenuItem<int>(
+                  value: 0,
+                  child: Text('Catálogo'),
+                ),
+                PopupMenuItem<int>(
+                  value: 1,
+                  child: Text('Opcion 2'),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+        child: ListView(
+          children: [
+            ProductoCard(
+              nombre: 'Lentes de Sol Ray-Ban',
+              imagenPath: 'assets/1.png',
+              precio: 150,
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            ProductoCard(
+              nombre: 'Lentes de Lectura',
+              imagenPath: 'assets/2.png',
+              precio: 80,
+            ),
+            // Agrega más productos aquí
+          ],
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Text(
+                'Menú Lateral',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Opción 1'),
+              onTap: () {
+                // Implementa la lógica para la opción 1
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Opción 2'),
+              onTap: () {
+                // Implementa la lógica para la opción 2
+                Navigator.pop(context);
+              },
             ),
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu),
+            label: 'Menu lateral',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue,
+        onTap: (index) {
+          // Acción al elegir una opción del menú inferior
+          setState(() {
+            _selectedIndex = index;
+          });
+          // Implementa la lógica para cada ítem del menú inferior
+          if (index == 0) {
+            // Acción cuando se selecciona el ítem "Home"
+          } else if (index == 1) {
+            // Acción cuando se selecciona el ítem "Menu lateral"
+            Scaffold.of(context).openDrawer(); // Abrir el menú lateral
+          }
+        },
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        onPressed: () {
+          // Abrir modal de búsqueda
+          showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        // Cerrar el modal de búsqueda
+                        Navigator.pop(context);
+                      },
+                      child: Text('Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+        child: Icon(Icons.search),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+}
+
+class ProductoCard extends StatelessWidget {
+  final String nombre;
+  final String imagenPath;
+  final double precio;
+
+  const ProductoCard({
+    Key? key,
+    required this.nombre,
+    required this.imagenPath,
+    required this.precio,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: [
+          Image.asset(
+            imagenPath,
+            fit: BoxFit.cover,
+            height: 150,
+          ),
+          ListTile(
+            title: Text(nombre),
+            subtitle: Text('\$$precio'),
+            trailing: Icon(Icons.arrow_forward),
+            onTap: () {
+              // Implementa la lógica para mostrar detalles del producto
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetalleProducto(
+                    nombre: nombre,
+                    imagenPath: imagenPath,
+                    precio: precio,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DetalleProducto extends StatelessWidget {
+  final String nombre;
+  final String imagenPath;
+  final double precio;
+
+  const DetalleProducto({
+    Key? key,
+    required this.nombre,
+    required this.imagenPath,
+    required this.precio,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Detalle del Producto'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              imagenPath,
+              fit: BoxFit.cover,
+              height: 150,
+            ),
+            SizedBox(height: 20),
+            Text(
+              nombre,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              '\$$precio',
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.blue,
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Implementa la lógica para agregar el producto al carrito
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Producto agregado al carrito'),
+                  duration: Duration(seconds: 2),
+                ));
+              },
+              child: Text('Agregar al Carrito'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
