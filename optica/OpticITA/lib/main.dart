@@ -23,6 +23,7 @@ class CatalogoLentes extends StatefulWidget {
 }
 
 class _CatalogoLentesState extends State<CatalogoLentes> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _selectedIndex;
 
   @override
@@ -34,12 +35,12 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('Catálogo de Lentes'),
         actions: [
           PopupMenuButton<int>(
             onSelected: (value) {
-              // Acción al seleccionar una opción del menú
               setState(() {
                 _selectedIndex = value;
               });
@@ -52,7 +53,7 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
                 ),
                 PopupMenuItem<int>(
                   value: 1,
-                  child: Text('Opcion 2'),
+                  child: Text('Opción 2'),
                 ),
               ];
             },
@@ -64,15 +65,14 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
           children: [
             ProductoCard(
               nombre: 'Lentes de Sol Ray-Ban',
-              imagenPath: 'assets/1.png',
+              imagenPath: 'assets/images/rayban.png',
               precio: 150,
             ),
             ProductoCard(
               nombre: 'Lentes de Lectura',
-              imagenPath: 'assets/2.png',
+              imagenPath: 'assets/images/lectura.png',
               precio: 80,
             ),
-            // Agrega más productos aquí
           ],
         ),
       ),
@@ -92,14 +92,12 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
             ListTile(
               title: Text('Opción 1'),
               onTap: () {
-                // Implementa la lógica para la opción 1
                 Navigator.pop(context);
               },
             ),
             ListTile(
               title: Text('Opción 2'),
               onTap: () {
-                // Implementa la lógica para la opción 2
                 Navigator.pop(context);
               },
             ),
@@ -120,22 +118,16 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
         onTap: (index) {
-          // Acción al elegir una opción del menú inferior
           setState(() {
             _selectedIndex = index;
           });
-          // Implementa la lógica para cada ítem del menú inferior
-          if (index == 0) {
-            // Acción cuando se selecciona el ítem "Home"
-          } else if (index == 1) {
-            // Acción cuando se selecciona el ítem "Menu lateral"
-            Scaffold.of(context).openDrawer(); // Abrir el menú lateral
+          if (index == 1) {
+            _scaffoldKey.currentState?.openDrawer();
           }
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Abrir modal de búsqueda
           showModalBottomSheet(
             context: context,
             builder: (BuildContext context) {
@@ -145,7 +137,6 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        // Cerrar el modal de búsqueda
                         Navigator.pop(context);
                       },
                       child: Text('Cerrar'),
@@ -190,7 +181,6 @@ class ProductoCard extends StatelessWidget {
             subtitle: Text('\$$precio'),
             trailing: Icon(Icons.arrow_forward),
             onTap: () {
-              // Implementa la lógica para mostrar detalles del producto
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -255,7 +245,6 @@ class DetalleProducto extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Implementa la lógica para agregar el producto al carrito
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text('Producto agregado al carrito'),
                   duration: Duration(seconds: 2),
