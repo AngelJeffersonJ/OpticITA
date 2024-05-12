@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -25,11 +27,37 @@ class CatalogoLentes extends StatefulWidget {
 class _CatalogoLentesState extends State<CatalogoLentes> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _selectedIndex;
+  List<Map<String, dynamic>> usuarios = [];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = 0;
+    _loadUsers();
+  }
+
+  void _loadUsers() async {
+    try {
+      final file = File('usuarios.json');
+      if (await file.exists()) {
+        final usersData = await file.readAsString();
+        setState(() {
+          usuarios = List<Map<String, dynamic>>.from(jsonDecode(usersData));
+        });
+      }
+    } catch (e) {
+      print("Error cargando usuarios: $e");
+    }
+  }
+
+  void _saveUser(Map<String, dynamic> userData) async {
+    try {
+      usuarios.add(userData);
+      final file = File('usuarios.json');
+      await file.writeAsString(jsonEncode(usuarios));
+    } catch (e) {
+      print("Error guardando usuario: $e");
+    }
   }
 
   @override
@@ -48,17 +76,17 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
               );
             },
           ),
-
           IconButton(
             icon: Icon(Icons.person_add),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => RegisterScreen()),
+                MaterialPageRoute(
+                    builder: (context) =>
+                        RegisterScreen(onRegister: _saveUser)),
               );
             },
           ),
-    
           PopupMenuButton<int>(
             onSelected: (value) {
               setState(() {
@@ -71,10 +99,6 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
                   value: 0,
                   child: Text('Catálogo'),
                 ),
-                PopupMenuItem<int>(
-                  value: 1,
-                  child: Text('Opción 2'),
-                ),
               ];
             },
           ),
@@ -86,46 +110,52 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
             ProductoCard(
               nombre: 'Lente Oftálmico Gucci GG0027O Havana',
               imagenPath: 'assets/images/L1-1.png',
-              description: 'Los Lentes oftálmicos Gucci GG0027O para mujer cuentan con un diseño marco completo redondo que les da un estilo muy femenino y atractivo, para que expreses tu personalidad. Fabricado con acetato color havana super resistentes y cómodos de usar para altas jornadas del día. Recomendado para rostros cuadrados y forma de diamante. Sé parte de este modelo y complementa tu look con Gucci.',
+              description:
+                  'Los Lentes oftálmicos Gucci GG0027O para mujer cuentan con un diseño marco completo redondo que les da un estilo muy femenino y atractivo, para que expreses tu personalidad. Fabricado con acetato color havana super resistentes y cómodos de usar para altas jornadas del día. Recomendado para rostros cuadrados y forma de diamante. Sé parte de este modelo y complementa tu look con Gucci.',
               precio: 800,
             ),
             ProductoCard(
               nombre: 'Lente Oftálmico Martha Debayle JOAN Negro',
               imagenPath: 'assets/images/L2-1.png',
-              description: 'Los lentes oftálmicos JOAN son inspirados en Joan Crawford tienen un marco completo en forma cuadrada oversize fabricado En acetato negro. Las varillas están hechas de metal en color dorado con diseño circular garigoleado. Sus terminales son de rayas en blanco y negro. Recomendado para rostros ovalados y forma de diamante.',
+              description:
+                  'Los lentes oftálmicos JOAN son inspirados en Joan Crawford tienen un marco completo en forma cuadrada oversize fabricado En acetato negro. Las varillas están hechas de metal en color dorado con diseño circular garigoleado. Sus terminales son de rayas en blanco y negro. Recomendado para rostros ovalados y forma de diamante.',
               precio: 575,
             ),
             ProductoCard(
               nombre: 'Lente Oftálmico Ray Ban RB7047O Negro',
               imagenPath: 'assets/images/L3-1.png',
-              description: 'Los Lentes Oftálmicos Ray-Ban RB7047O cuentan con un diseño rectangular que les da un estilo clásico para que expreses tu personalidad. Fabricado en acetato, este armazón es muy cómodo, resistente y duradero. El armazón Ray-Ban oftálmico viene en color negro mate que le da un toque de modernidad a lo clásico.',
+              description:
+                  'Los Lentes Oftálmicos Ray-Ban RB7047O cuentan con un diseño rectangular que les da un estilo clásico para que expreses tu personalidad. Fabricado en acetato, este armazón es muy cómodo, resistente y duradero. El armazón Ray-Ban oftálmico viene en color negro mate que le da un toque de modernidad a lo clásico.',
               precio: 900,
             ),
             ProductoCard(
               nombre: 'Lentes de Contacto Lunare cosmético Neutro',
               imagenPath: 'assets/images/L4-1.png',
-              description: 'Los lentes de contacto Lunare están fabricados con la tecnología Tri-Kolor, que gracias a sus tres capas de color ofrece un aspecto más natural a tus ojos y la mayor comodidad.',
+              description:
+                  'Los lentes de contacto Lunare están fabricados con la tecnología Tri-Kolor, que gracias a sus tres capas de color ofrece un aspecto más natural a tus ojos y la mayor comodidad.',
               precio: 500,
             ),
             ProductoCard(
               nombre: 'Lentes de Sol Ray-Ban JA-JO',
               imagenPath: 'assets/images/L5-1.png',
-              description: 'Usa la energía de los ojos brillantes y el ambiente jovial del mundo de los festivales con el nuevo estilo esencial veraniego - que trae el JA-JO. Hemos añadido más impacto a las atemporales gafas redondas de metal con una explosión de color para lucir un estilo elegante y contemporáneo.',
+              description:
+                  'Usa la energía de los ojos brillantes y el ambiente jovial del mundo de los festivales con el nuevo estilo esencial veraniego - que trae el JA-JO. Hemos añadido más impacto a las atemporales gafas redondas de metal con una explosión de color para lucir un estilo elegante y contemporáneo.',
               precio: 420,
             ),
             ProductoCard(
               nombre: 'Lentes de lectura',
               imagenPath: 'assets/images/lectura.png',
-              description: 'Usa la energía de los ojos brillantes y el ambiente jovial del mundo de los festivales con el nuevo estilo esencial veraniego - que trae el JA-JO. Hemos añadido más impacto a las atemporales gafas redondas de metal con una explosión de color para lucir un estilo elegante y contemporáneo.',
-              precio: 420,
+              description:
+                  'Lentes para lectura con estilo moderno y comodidad. Ideales para lectura diaria o en momentos específicos de trabajo o estudio.',
+              precio: 150,
             ),
             ProductoCard(
               nombre: 'Lentes Rayban',
               imagenPath: 'assets/images/Rayban.png',
-              description: 'Usa la energía de los ojos brillantes y el ambiente jovial del mundo de los festivales con el nuevo estilo esencial veraniego - que trae el JA-JO. Hemos añadido más impacto a las atemporales gafas redondas de metal con una explosión de color para lucir un estilo elegante y contemporáneo.',
-              precio: 420,
+              description:
+                  'Lentes de sol Rayban con estilo clásico y protección UV. Perfectos para cualquier ocasión bajo el sol.',
+              precio: 300,
             ),
-
           ],
         ),
       ),
@@ -143,15 +173,14 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
               ),
             ),
             ListTile(
-              title: Text('Opción 1'),
+              title: Text('Perfil de Usuario'),
               onTap: () {
                 Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text('Opción 2'),
-              onTap: () {
-                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => UserProfile(usuarios)),
+                );
               },
             ),
           ],
@@ -178,30 +207,6 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
             _scaffoldKey.currentState?.openDrawer();
           }
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (BuildContext context) {
-              return Container(
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text('Cerrar'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-        child: Icon(Icons.search),
-        backgroundColor: Colors.blue,
       ),
     );
   }
@@ -331,6 +336,34 @@ class DetalleProducto extends StatelessWidget {
   }
 }
 
+class UserProfile extends StatelessWidget {
+  final List<Map<String, dynamic>> users;
+
+  const UserProfile(this.users, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Perfil de Usuario'),
+      ),
+      body: Center(
+        child: ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              title: Text(user['username']),
+              subtitle: Text(user['email']),
+              trailing: Text(user['phone']),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -375,7 +408,32 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
+  final Function(Map<String, dynamic>) onRegister;
+
+  RegisterScreen({required this.onRegister});
+
+  @override
+  _RegisterScreenState createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -389,6 +447,7 @@ class RegisterScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
+                controller: _usernameController,
                 decoration: InputDecoration(
                   labelText: 'Nombre de usuario',
                   icon: Icon(Icons.person),
@@ -396,8 +455,8 @@ class RegisterScreen extends StatelessWidget {
                 keyboardType: TextInputType.text,
               ),
               SizedBox(height: 20),
-              
               TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Correo Electrónico',
                   prefixIcon: Icon(Icons.email),
@@ -406,14 +465,16 @@ class RegisterScreen extends StatelessWidget {
               ),
               SizedBox(height: 20),
               TextField(
+                controller: _phoneController,
                 decoration: InputDecoration(
                   labelText: 'Teléfono',
                   prefixIcon: Icon(Icons.phone),
                 ),
-                keyboardType: TextInputType.emailAddress,
+                keyboardType: TextInputType.phone,
               ),
               SizedBox(height: 20),
               TextField(
+                controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   prefixIcon: Icon(Icons.lock),
@@ -422,6 +483,7 @@ class RegisterScreen extends StatelessWidget {
               ),
               SizedBox(height: 20),
               TextField(
+                controller: _confirmPasswordController,
                 decoration: InputDecoration(
                   labelText: 'Confirmar Contraseña',
                   prefixIcon: Icon(Icons.lock),
@@ -431,8 +493,37 @@ class RegisterScreen extends StatelessWidget {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Implementar lógica de registro
-                  Navigator.pop(context); // Simula un registro exitoso
+                  if (_passwordController.text ==
+                      _confirmPasswordController.text) {
+                    widget.onRegister({
+                      'username': _usernameController.text,
+                      'email': _emailController.text,
+                      'phone': _phoneController.text,
+                      'password': _passwordController.text,
+                    });
+                    Navigator.pop(context);
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Error'),
+                          content: Text(
+                            'Las contraseñas no coinciden.',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context)
+                                    .pop(); // Cierra el diálogo
+                              },
+                              child: Text('Aceptar'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
                 },
                 child: Text('Registrarse'),
               ),
@@ -443,4 +534,3 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 }
-
