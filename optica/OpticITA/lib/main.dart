@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:xml/xml.dart' as xml;
 
 void main() {
   runApp(MyApp());
@@ -28,12 +29,14 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _selectedIndex;
   List<Map<String, dynamic>> usuarios = [];
+  List<Map<String, dynamic>> resenas = [];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = 0;
     _loadUsers();
+    _loadReviews();
   }
 
   void _loadUsers() async {
@@ -59,6 +62,81 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
       print("Error guardando usuario: $e");
     }
   }
+  
+
+   void _loadReviews() async {
+    try {
+      final file = File('resenas.xml');
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        final document = xml.XmlDocument.parse(contents);
+        setState(() {
+          resenas = _parseReviews(document);
+        });
+      }
+    } catch (e) {
+      print("Error cargando reseñas: $e");
+    }
+  }
+
+  List<Map<String, dynamic>> _parseReviews(xml.XmlDocument document) {
+    final reviews = <Map<String, dynamic>>[];
+    final elements = document.findAllElements('review');
+    for (var element in elements) {
+      final username = element.findElements('username').single.text;
+      final reviewText = element.findElements('text').single.text;
+      reviews.add({
+        'username': username,
+        'review': reviewText,
+      });
+    }
+    return reviews;
+  }
+
+  void _saveReview(String username, String reviewText) async {
+    try {
+      final file = File('reseñas.xml');
+      final document = await _getOrCreateXmlDocument(file);
+      final reviewsElement = document.findElements('reviews').single;
+      final newReview = xml.XmlElement(
+        xml.XmlName('review'),
+        [],
+        [
+          xml.XmlElement(xml.XmlName('username'), [], [xml.XmlText(username)]),
+          xml.XmlElement(xml.XmlName('text'), [], [xml.XmlText(reviewText)]),
+        ],
+      );
+      reviewsElement.children.add(newReview);
+      await file.writeAsString(document.toXmlString(pretty: true));
+      setState(() {
+        resenas.add({
+          'username': username,
+          'review': reviewText,
+        });
+      });
+    } catch (e) {
+      print("Error guardando reseña: $e");
+    }
+  }
+
+  Future<xml.XmlDocument> _getOrCreateXmlDocument(File file) async {
+    if (await file.exists()) {
+      final contents = await file.readAsString();
+      return xml.XmlDocument.parse(contents);
+    } else {
+      return xml.XmlDocument([
+        xml.XmlProcessing('xml', 'version="1.0"'),
+        xml.XmlElement(
+          xml.XmlName('reviews'),
+          [],
+          [],
+        ),
+      ]);
+    }
+  }
+
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +338,7 @@ class ProductoCard extends StatelessWidget {
   }
 }
 
-class DetalleProducto extends StatelessWidget {
+class DetalleProducto extends StatefulWidget {
   final String nombre;
   final String imagenPath;
   final String description;
@@ -275,6 +353,15 @@ class DetalleProducto extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _DetalleProductoState createState() => _DetalleProductoState();
+}
+
+class _DetalleProductoState extends State<DetalleProducto> {
+  final _reviewController = TextEditingController();
+
+  List<Review> reviews = [];
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -285,55 +372,95 @@ class DetalleProducto extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Imagen
             Image.asset(
-              imagenPath,
+              widget.imagenPath,
               fit: BoxFit.cover,
-              height: 150, // Ajusta esta altura según tu preferencia
+              height: 150,
             ),
-            SizedBox(height: 20),
-            // Nombre del producto
+            SizedBox(height: 16),
             Text(
-              nombre,
+              widget.nombre,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 10),
-            // Descripción
             Text(
-              description,
+              widget.description,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 12,
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 10),
-            // Precio
             Text(
-              '\$$precio',
+              '\$${widget.precio}',
               style: TextStyle(
                 fontSize: 20,
                 color: Colors.blue,
               ),
             ),
             SizedBox(height: 20),
-            // Botón
+            TextField(
+              controller: _reviewController,
+              decoration: InputDecoration(
+                labelText: 'Escribe tu reseña',
+              ),
+              maxLines: null,
+            ),
+            SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
+                setState(() {
+                  reviews.add(
+                    Review(
+                      username: 'Usuario',
+                      review: _reviewController.text,
+                    ),
+                  );
+                  _reviewController.clear();
+                });
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Producto agregado al carrito'),
+                  content: Text('Reseña agregada con éxito'),
                   duration: Duration(seconds: 2),
                 ));
               },
-              child: Text('Agregar al Carrito'),
+              child: Text('Enviar Reseña'),
+            ),
+            SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: reviews.length,
+                itemBuilder: (context, index) {
+                  final review = reviews[index];
+                  return ListTile(
+                    title: Text(review.username),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(review.review),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class Review {
+  final String username;
+  final String review;
+
+  Review({
+    required this.username,
+    required this.review,
+  });
 }
 
 class UserProfile extends StatelessWidget {
@@ -395,7 +522,6 @@ class LoginScreen extends StatelessWidget {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Implementar lógica de autenticación
                   Navigator.pop(context); // Simula un inicio de sesión exitoso
                 },
                 child: Text('Iniciar Sesión'),
