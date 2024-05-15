@@ -440,6 +440,18 @@ class _DetalleProductoState extends State<DetalleProducto> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(review.review),
+                        SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                _editarComentario(index);
+                              },
+                              child: Text('Editar'),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );
@@ -449,6 +461,50 @@ class _DetalleProductoState extends State<DetalleProducto> {
           ],
         ),
       ),
+    );
+  }
+
+  void _editarComentario(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String editedReview = reviews[index].review;
+        return AlertDialog(
+          title: Text('Editar Reseña'),
+          content: TextField(
+            onChanged: (value) {
+              editedReview = value;
+            },
+            controller: TextEditingController(text: reviews[index].review),
+            decoration: InputDecoration(labelText: 'Editar tu reseña'),
+            maxLines: null,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  reviews[index] = Review(
+                    username: reviews[index].username,
+                    review: editedReview,
+                  );
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Reseña editada con éxito'),
+                  duration: Duration(seconds: 2),
+                ));
+              },
+              child: Text('Guardar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -462,6 +518,7 @@ class Review {
     required this.review,
   });
 }
+
 
 class UserProfile extends StatelessWidget {
   final List<Map<String, dynamic>> users;
