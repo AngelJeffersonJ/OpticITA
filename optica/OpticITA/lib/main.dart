@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart' as xml;
-import 'register.dart';
-import 'login_screen.dart';
-import 'user_profile.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -58,25 +56,11 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
 
   void _saveUser(Map<String, dynamic> userData) async {
     try {
-      setState(() {
-        usuarios.add(userData);
-      });
+      usuarios.add(userData);
       final file = File('usuarios.json');
       await file.writeAsString(jsonEncode(usuarios));
     } catch (e) {
       print("Error guardando usuario: $e");
-    }
-  }
-
-  void _updateUser(int index, Map<String, dynamic> updatedUser) async {
-    try {
-      setState(() {
-        usuarios[index] = updatedUser;
-      });
-      final file = File('usuarios.json');
-      await file.writeAsString(jsonEncode(usuarios));
-    } catch (e) {
-      print("Error actualizando usuario: $e");
     }
   }
 
@@ -148,6 +132,16 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
           [],
         ),
       ]);
+    }
+  }
+
+  void _updateUser(int index, Map<String, dynamic> userData) async {
+    try {
+      usuarios[index] = userData;
+      final file = File('usuarios.json');
+      await file.writeAsString(jsonEncode(usuarios));
+    } catch (e) {
+      print("Error actualizando usuario: $e");
     }
   }
 
@@ -270,8 +264,10 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          UserProfile(usuarios, onUpdateUser: _updateUser)),
+                      builder: (context) => UserProfile(
+                            usuarios,
+                            onUpdateUser: _updateUser,
+                          )),
                 );
               },
             ),
@@ -375,6 +371,36 @@ class _DetalleProductoState extends State<DetalleProducto> {
 
   List<Review> reviews = [];
 
+  late String nombre;
+  late String description;
+  late double precio;
+
+  @override
+  void initState() {
+    super.initState();
+    nombre = widget.nombre;
+    description = widget.description;
+    precio = widget.precio;
+  }
+
+  void _loadProductDetailsFromXml() async {
+    FilePickerResult? result = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ['xml']);
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      String xmlContent = utf8.decode(file.bytes!);
+      var document = xml.XmlDocument.parse(xmlContent);
+      setState(() {
+        nombre = document.findAllElements('nombre').first.text;
+        description = document.findAllElements('description').first.text;
+        precio = double.parse(document.findAllElements('precio').first.text);
+      });
+    } else {
+      // Usuario canceló la selección del archivo
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -393,7 +419,7 @@ class _DetalleProductoState extends State<DetalleProducto> {
             ),
             SizedBox(height: 16),
             Text(
-              widget.nombre,
+              nombre,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -401,7 +427,7 @@ class _DetalleProductoState extends State<DetalleProducto> {
             ),
             SizedBox(height: 10),
             Text(
-              widget.description,
+              description,
               style: TextStyle(
                 fontSize: 12,
               ),
@@ -409,11 +435,16 @@ class _DetalleProductoState extends State<DetalleProducto> {
             ),
             SizedBox(height: 10),
             Text(
-              '\$${widget.precio}',
+              '\$${precio}',
               style: TextStyle(
                 fontSize: 20,
                 color: Colors.blue,
               ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadProductDetailsFromXml,
+              child: Text('Cargar detalles desde XML'),
             ),
             SizedBox(height: 20),
             TextField(
@@ -475,4 +506,248 @@ class Review {
     required this.username,
     required this.review,
   });
+}
+
+class UserProfile extends StatelessWidget {
+  final List<Map<String, dynamic>> users;
+  final Function(int, Map<String, dynamic>) onUpdateUser;
+
+  const UserProfile(this.users, {required this.onUpdateUser, Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Perfil de Usuario'),
+      ),
+      body: Center(
+        child: ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              title: Text(user['username']),
+              subtitle: Text(user['email']),
+              trailing: Text(user['phone']),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RegisterScreen(
+                      onRegister: (userData) {},
+                      initialData: user,
+                      userIndex: index,
+                      onUpdate: onUpdateUser,
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class LoginScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Iniciar Sesión'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Correo Electrónico',
+                  prefixIcon: Icon(Icons.email),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              SizedBox(height: 20),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  prefixIcon: Icon(Icons.lock),
+                ),
+                obscureText: true,
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Simula un inicio de sesión exitoso
+                },
+                child: Text('Iniciar Sesión'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class RegisterScreen extends StatefulWidget {
+  final Function(Map<String, dynamic>) onRegister;
+  final Map<String, dynamic>? initialData;
+  final int? userIndex;
+  final Function(int, Map<String, dynamic>)? onUpdate;
+
+  RegisterScreen({
+    required this.onRegister,
+    this.initialData,
+    this.userIndex,
+    this.onUpdate,
+  });
+
+  @override
+  _RegisterScreenState createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialData != null) {
+      _usernameController.text = widget.initialData!['username'];
+      _emailController.text = widget.initialData!['email'];
+      _phoneController.text = widget.initialData!['phone'];
+      _passwordController.text = widget.initialData!['password'];
+      _confirmPasswordController.text = widget.initialData!['password'];
+    }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _registerOrUpdate() {
+    final userData = {
+      'username': _usernameController.text,
+      'email': _emailController.text,
+      'phone': _phoneController.text,
+      'password': _passwordController.text,
+    };
+
+    if (widget.userIndex != null && widget.onUpdate != null) {
+      widget.onUpdate!(widget.userIndex!, userData);
+    } else {
+      widget.onRegister(userData);
+    }
+    Navigator.pop(context);
+  }
+
+  Future<void> _loadFromJson() async {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.any);
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      String contents = String.fromCharCodes(file.bytes!);
+      final jsonData = jsonDecode(contents);
+
+      setState(() {
+        _usernameController.text = jsonData['username'];
+        _emailController.text = jsonData['email'];
+        _phoneController.text = jsonData['phone'];
+        _passwordController.text = jsonData['password'];
+        _confirmPasswordController.text = jsonData['password'];
+      });
+    } else {
+      print('No file selected');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title:
+            Text(widget.userIndex != null ? 'Actualizar Datos' : 'Registrarse'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: 'Nombre de usuario',
+                  icon: Icon(Icons.person),
+                ),
+                keyboardType: TextInputType.text,
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Correo Electrónico',
+                  prefixIcon: Icon(Icons.email),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: _phoneController,
+                decoration: InputDecoration(
+                  labelText: 'Teléfono',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  prefixIcon: Icon(Icons.lock),
+                ),
+                obscureText: true,
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: _confirmPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Confirmar Contraseña',
+                  prefixIcon: Icon(Icons.lock),
+                ),
+                obscureText: true,
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _registerOrUpdate,
+                child: Text(
+                    widget.userIndex != null ? 'Actualizar' : 'Registrarse'),
+              ),
+              ElevatedButton(
+                onPressed: _loadFromJson,
+                child: Text('Cargar desde JSON'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
