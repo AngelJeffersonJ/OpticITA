@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onRegister;
+  final Map<String, dynamic>? initialData;
+  final int? userIndex;
+  final Function(int, Map<String, dynamic>)? onUpdate;
 
-  RegisterScreen({required this.onRegister});
+  RegisterScreen({
+    required this.onRegister,
+    this.initialData,
+    this.userIndex,
+    this.onUpdate,
+  });
 
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
@@ -19,6 +27,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.initialData != null) {
+      _usernameController.text = widget.initialData!['username'];
+      _emailController.text = widget.initialData!['email'];
+      _phoneController.text = widget.initialData!['phone'];
+      _passwordController.text = widget.initialData!['password'];
+      _confirmPasswordController.text = widget.initialData!['password'];
+    }
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
@@ -28,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _loadFromFile() async {
+  Future<void> _loadFromFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
@@ -36,15 +56,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (result != null) {
       PlatformFile file = result.files.first;
-      String content = utf8.decode(file.bytes!);
-      Map<String, dynamic> data = jsonDecode(content);
-
+      String fileContent = utf8.decode(file.bytes!);
+      Map<String, dynamic> jsonData = jsonDecode(fileContent);
       setState(() {
-        _usernameController.text = data['username'] ?? '';
-        _emailController.text = data['email'] ?? '';
-        _phoneController.text = data['phone'] ?? '';
-        _passwordController.text = data['password'] ?? '';
-        _confirmPasswordController.text = data['confirm_password'] ?? '';
+        _usernameController.text = jsonData['username'] ?? '';
+        _emailController.text = jsonData['email'] ?? '';
+        _phoneController.text = jsonData['phone'] ?? '';
+        _passwordController.text = jsonData['password'] ?? '';
+        _confirmPasswordController.text = jsonData['password'] ?? '';
       });
     }
   }
@@ -53,7 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Registrarse'),
+        title: Text(
+            widget.initialData == null ? 'Registrarse' : 'Actualizar Datos'),
       ),
       body: Center(
         child: Padding(
@@ -108,19 +128,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _loadFromFile,
-                child: Text('Cargar JSON'),
+                child: Text('Cargar desde archivo JSON'),
               ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   if (_passwordController.text ==
                       _confirmPasswordController.text) {
-                    widget.onRegister({
+                    Map<String, dynamic> userData = {
                       'username': _usernameController.text,
                       'email': _emailController.text,
                       'phone': _phoneController.text,
                       'password': _passwordController.text,
-                    });
+                    };
+                    if (widget.initialData == null) {
+                      widget.onRegister(userData);
+                    } else {
+                      widget.onUpdate!(widget.userIndex!, userData);
+                    }
                     Navigator.pop(context);
                   } else {
                     showDialog(
@@ -128,14 +153,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: Text('Error'),
-                          content: Text(
-                            'Las contraseñas no coinciden.',
-                          ),
+                          content: Text('Las contraseñas no coinciden.'),
                           actions: <Widget>[
                             TextButton(
                               onPressed: () {
-                                Navigator.of(context)
-                                    .pop(); // Cierra el diálogo
+                                Navigator.of(context).pop();
                               },
                               child: Text('Aceptar'),
                             ),
@@ -145,7 +167,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     );
                   }
                 },
-                child: Text('Registrarse'),
+                child: Text(
+                    widget.initialData == null ? 'Registrarse' : 'Actualizar'),
               ),
             ],
           ),

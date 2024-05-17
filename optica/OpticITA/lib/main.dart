@@ -58,11 +58,25 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
 
   void _saveUser(Map<String, dynamic> userData) async {
     try {
-      usuarios.add(userData);
+      setState(() {
+        usuarios.add(userData);
+      });
       final file = File('usuarios.json');
       await file.writeAsString(jsonEncode(usuarios));
     } catch (e) {
       print("Error guardando usuario: $e");
+    }
+  }
+
+  void _updateUser(int index, Map<String, dynamic> updatedUser) async {
+    try {
+      setState(() {
+        usuarios[index] = updatedUser;
+      });
+      final file = File('usuarios.json');
+      await file.writeAsString(jsonEncode(usuarios));
+    } catch (e) {
+      print("Error actualizando usuario: $e");
     }
   }
 
@@ -256,7 +270,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => UserProfile(usuarios)),
+                      builder: (context) =>
+                          UserProfile(usuarios, onUpdateUser: _updateUser)),
                 );
               },
             ),
@@ -439,18 +454,6 @@ class _DetalleProductoState extends State<DetalleProducto> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(review.review),
-                        SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                _editarComentario(index);
-                              },
-                              child: Text('Editar'),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   );
@@ -460,50 +463,6 @@ class _DetalleProductoState extends State<DetalleProducto> {
           ],
         ),
       ),
-    );
-  }
-
-  void _editarComentario(int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String editedReview = reviews[index].review;
-        return AlertDialog(
-          title: Text('Editar Reseña'),
-          content: TextField(
-            onChanged: (value) {
-              editedReview = value;
-            },
-            controller: TextEditingController(text: reviews[index].review),
-            decoration: InputDecoration(labelText: 'Editar tu reseña'),
-            maxLines: null,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  reviews[index] = Review(
-                    username: reviews[index].username,
-                    review: editedReview,
-                  );
-                });
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Reseña editada con éxito'),
-                  duration: Duration(seconds: 2),
-                ));
-              },
-              child: Text('Guardar'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancelar'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
