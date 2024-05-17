@@ -31,7 +31,6 @@ class LoginScreen extends StatelessWidget {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Implementar lógica de autenticación
                   Navigator.pop(context); // Simula un inicio de sesión exitoso
                 },
                 child: Text('Iniciar Sesión'),

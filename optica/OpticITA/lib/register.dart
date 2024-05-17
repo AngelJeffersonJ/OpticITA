@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 
 class RegisterScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onRegister;
@@ -24,6 +26,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _loadFromFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      String content = utf8.decode(file.bytes!);
+      Map<String, dynamic> data = jsonDecode(content);
+
+      setState(() {
+        _usernameController.text = data['username'] ?? '';
+        _emailController.text = data['email'] ?? '';
+        _phoneController.text = data['phone'] ?? '';
+        _passwordController.text = data['password'] ?? '';
+        _confirmPasswordController.text = data['confirm_password'] ?? '';
+      });
+    }
   }
 
   @override
@@ -84,6 +107,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               SizedBox(height: 20),
               ElevatedButton(
+                onPressed: _loadFromFile,
+                child: Text('Cargar JSON'),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
                 onPressed: () {
                   if (_passwordController.text ==
                       _confirmPasswordController.text) {
@@ -93,12 +121,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       'phone': _phoneController.text,
                       'password': _passwordController.text,
                     });
-                    Navigator.pop(context); // Simula un registro exitoso
+                    Navigator.pop(context);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Las contraseñas no coinciden'),
-                      duration: Duration(seconds: 2),
-                    ));
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Error'),
+                          content: Text(
+                            'Las contraseñas no coinciden.',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context)
+                                    .pop(); // Cierra el diálogo
+                              },
+                              child: Text('Aceptar'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   }
                 },
                 child: Text('Registrarse'),

@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart' as xml;
+import 'register.dart';
+import 'login_screen.dart';
+import 'user_profile.dart';
 
 void main() {
   runApp(MyApp());
@@ -62,9 +65,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
       print("Error guardando usuario: $e");
     }
   }
-  
 
-   void _loadReviews() async {
+  void _loadReviews() async {
     try {
       final file = File('resenas.xml');
       if (await file.exists()) {
@@ -134,9 +136,6 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
       ]);
     }
   }
-
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -517,203 +516,4 @@ class Review {
     required this.username,
     required this.review,
   });
-}
-
-
-class UserProfile extends StatelessWidget {
-  final List<Map<String, dynamic>> users;
-
-  const UserProfile(this.users, {Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Perfil de Usuario'),
-      ),
-      body: Center(
-        child: ListView.builder(
-          itemCount: users.length,
-          itemBuilder: (context, index) {
-            final user = users[index];
-            return ListTile(
-              title: Text(user['username']),
-              subtitle: Text(user['email']),
-              trailing: Text(user['phone']),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class LoginScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Iniciar Sesión'),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Correo Electrónico',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              SizedBox(height: 20),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Simula un inicio de sesión exitoso
-                },
-                child: Text('Iniciar Sesión'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class RegisterScreen extends StatefulWidget {
-  final Function(Map<String, dynamic>) onRegister;
-
-  RegisterScreen({required this.onRegister});
-
-  @override
-  _RegisterScreenState createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Registrarse'),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Nombre de usuario',
-                  icon: Icon(Icons.person),
-                ),
-                keyboardType: TextInputType.text,
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Correo Electrónico',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _phoneController,
-                decoration: InputDecoration(
-                  labelText: 'Teléfono',
-                  prefixIcon: Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirmar Contraseña',
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_passwordController.text ==
-                      _confirmPasswordController.text) {
-                    widget.onRegister({
-                      'username': _usernameController.text,
-                      'email': _emailController.text,
-                      'phone': _phoneController.text,
-                      'password': _passwordController.text,
-                    });
-                    Navigator.pop(context);
-                  } else {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('Error'),
-                          content: Text(
-                            'Las contraseñas no coinciden.',
-                          ),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context)
-                                    .pop(); // Cierra el diálogo
-                              },
-                              child: Text('Aceptar'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-                },
-                child: Text('Registrarse'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
