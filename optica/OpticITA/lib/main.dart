@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -40,9 +41,15 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
     _loadReviews();
   }
 
+  Future<String> _getFilePath(String fileName) async {
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/$fileName';
+  }
+
   void _loadUsers() async {
     try {
-      final file = File('usuarios.json');
+      final path = await _getFilePath('usuarios.json');
+      final file = File(path);
       if (await file.exists()) {
         final usersData = await file.readAsString();
         setState(() {
@@ -57,7 +64,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
   void _saveUser(Map<String, dynamic> userData) async {
     try {
       usuarios.add(userData);
-      final file = File('usuarios.json');
+      final path = await _getFilePath('usuarios.json');
+      final file = File(path);
       await file.writeAsString(jsonEncode(usuarios));
     } catch (e) {
       print("Error guardando usuario: $e");
@@ -66,7 +74,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
 
   void _loadReviews() async {
     try {
-      final file = File('resenas.xml');
+      final path = await _getFilePath('resenas.xml');
+      final file = File(path);
       if (await file.exists()) {
         final contents = await file.readAsString();
         final document = xml.XmlDocument.parse(contents);
@@ -95,7 +104,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
 
   void _saveReview(String username, String reviewText) async {
     try {
-      final file = File('reseñas.xml');
+      final path = await _getFilePath('resenas.xml');
+      final file = File(path);
       final document = await _getOrCreateXmlDocument(file);
       final reviewsElement = document.findElements('reviews').single;
       final newReview = xml.XmlElement(
@@ -138,7 +148,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
   void _updateUser(int index, Map<String, dynamic> userData) async {
     try {
       usuarios[index] = userData;
-      final file = File('usuarios.json');
+      final path = await _getFilePath('usuarios.json');
+      final file = File(path);
       await file.writeAsString(jsonEncode(usuarios));
     } catch (e) {
       print("Error actualizando usuario: $e");
@@ -397,7 +408,7 @@ class _DetalleProductoState extends State<DetalleProducto> {
         precio = double.parse(document.findAllElements('precio').first.text);
       });
     } else {
-      // Usuario canceló la selección del archivo
+      print('No file selected');
     }
   }
 
@@ -657,12 +668,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _loadFromJson() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ['json']);
 
     if (result != null) {
       PlatformFile file = result.files.first;
-      String contents = String.fromCharCodes(file.bytes!);
+      String contents = utf8.decode(file.bytes!);
       final jsonData = jsonDecode(contents);
 
       setState(() {
