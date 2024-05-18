@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -37,123 +36,18 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
   void initState() {
     super.initState();
     _selectedIndex = 0;
-    _loadUsers();
-    _loadReviews();
   }
 
-  Future<String> _getFilePath(String fileName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}/$fileName';
-  }
-
-  void _loadUsers() async {
-    try {
-      final path = await _getFilePath('usuarios.json');
-      final file = File(path);
-      if (await file.exists()) {
-        final usersData = await file.readAsString();
-        setState(() {
-          usuarios = List<Map<String, dynamic>>.from(jsonDecode(usersData));
-        });
-      }
-    } catch (e) {
-      print("Error cargando usuarios: $e");
-    }
-  }
-
-  void _saveUser(Map<String, dynamic> userData) async {
-    try {
+  void _saveUser(Map<String, dynamic> userData) {
+    setState(() {
       usuarios.add(userData);
-      final path = await _getFilePath('usuarios.json');
-      final file = File(path);
-      await file.writeAsString(jsonEncode(usuarios));
-    } catch (e) {
-      print("Error guardando usuario: $e");
-    }
+    });
   }
 
-  void _loadReviews() async {
-    try {
-      final path = await _getFilePath('resenas.xml');
-      final file = File(path);
-      if (await file.exists()) {
-        final contents = await file.readAsString();
-        final document = xml.XmlDocument.parse(contents);
-        setState(() {
-          resenas = _parseReviews(document);
-        });
-      }
-    } catch (e) {
-      print("Error cargando reseñas: $e");
-    }
-  }
-
-  List<Map<String, dynamic>> _parseReviews(xml.XmlDocument document) {
-    final reviews = <Map<String, dynamic>>[];
-    final elements = document.findAllElements('review');
-    for (var element in elements) {
-      final username = element.findElements('username').single.text;
-      final reviewText = element.findElements('text').single.text;
-      reviews.add({
-        'username': username,
-        'review': reviewText,
-      });
-    }
-    return reviews;
-  }
-
-  void _saveReview(String username, String reviewText) async {
-    try {
-      final path = await _getFilePath('resenas.xml');
-      final file = File(path);
-      final document = await _getOrCreateXmlDocument(file);
-      final reviewsElement = document.findElements('reviews').single;
-      final newReview = xml.XmlElement(
-        xml.XmlName('review'),
-        [],
-        [
-          xml.XmlElement(xml.XmlName('username'), [], [xml.XmlText(username)]),
-          xml.XmlElement(xml.XmlName('text'), [], [xml.XmlText(reviewText)]),
-        ],
-      );
-      reviewsElement.children.add(newReview);
-      await file.writeAsString(document.toXmlString(pretty: true));
-      setState(() {
-        resenas.add({
-          'username': username,
-          'review': reviewText,
-        });
-      });
-    } catch (e) {
-      print("Error guardando reseña: $e");
-    }
-  }
-
-  Future<xml.XmlDocument> _getOrCreateXmlDocument(File file) async {
-    if (await file.exists()) {
-      final contents = await file.readAsString();
-      return xml.XmlDocument.parse(contents);
-    } else {
-      return xml.XmlDocument([
-        xml.XmlProcessing('xml', 'version="1.0"'),
-        xml.XmlElement(
-          xml.XmlName('reviews'),
-          [],
-          [],
-        ),
-      ]);
-    }
-  }
-
-  void _updateUser(int index, Map<String, dynamic> userData) async {
-    try {
-      usuarios[index] = userData;
-      final path = await _getFilePath('usuarios.json');
-      final file = File(path);
-      await file.writeAsString(jsonEncode(usuarios));
-    } catch (e) {
-      print("Error actualizando usuario: $e");
-    }
+  void _updateUser(int index, Map<String, dynamic> updatedUserData) {
+    setState(() {
+      usuarios[index] = updatedUserData;
+    });
   }
 
   @override
@@ -178,24 +72,9 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        RegisterScreen(onRegister: _saveUser)),
-              );
-            },
-          ),
-          PopupMenuButton<int>(
-            onSelected: (value) {
-              setState(() {
-                _selectedIndex = value;
-              });
-            },
-            itemBuilder: (BuildContext context) {
-              return <PopupMenuEntry<int>>[
-                PopupMenuItem<int>(
-                  value: 0,
-                  child: Text('Catálogo'),
+                  builder: (context) => RegisterScreen(onRegister: _saveUser),
                 ),
-              ];
+              );
             },
           ),
         ],
@@ -260,10 +139,8 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              child: Text(
-                'Menú Lateral',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
+              child: Text('Menú Lateral',
+                  style: TextStyle(color: Colors.white, fontSize: 24)),
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
@@ -275,10 +152,11 @@ class _CatalogoLentesState extends State<CatalogoLentes> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => UserProfile(
-                            usuarios,
-                            onUpdateUser: _updateUser,
-                          )),
+                    builder: (context) => UserProfile(
+                      usuarios,
+                      onUpdateUser: _updateUser,
+                    ),
+                  ),
                 );
               },
             ),
@@ -398,9 +276,9 @@ class _DetalleProductoState extends State<DetalleProducto> {
     FilePickerResult? result = await FilePicker.platform
         .pickFiles(type: FileType.custom, allowedExtensions: ['xml']);
 
-    if (result != null) {
-      PlatformFile file = result.files.first;
-      String xmlContent = utf8.decode(file.bytes!);
+    if (result != null && result.files.single.path != null) {
+      String? filePath = result.files.single.path;
+      String xmlContent = await File(filePath!).readAsString();
       var document = xml.XmlDocument.parse(xmlContent);
       setState(() {
         nombre = document.findAllElements('nombre').first.text;
@@ -671,10 +549,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     FilePickerResult? result = await FilePicker.platform
         .pickFiles(type: FileType.custom, allowedExtensions: ['json']);
 
-    if (result != null) {
-      PlatformFile file = result.files.first;
-      String contents = utf8.decode(file.bytes!);
-      final jsonData = jsonDecode(contents);
+    if (result != null && result.files.single.path != null) {
+      String? filePath = result.files.single.path;
+      String jsonContent = await File(filePath!).readAsString();
+      final jsonData = jsonDecode(jsonContent);
 
       setState(() {
         _usernameController.text = jsonData['username'];
